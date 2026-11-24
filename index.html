@@ -159,7 +159,8 @@
 <input id="testAttemptId" placeholder="Attempt ID">
 <input id="testQuestionId" placeholder="Question ID">
 <button onclick="testCrossStudentSave()">Test Answer Save</button>
-<div id="crossStudentTestStatus"></div>
+<button onclick="testCrossStudentSubmit()">Test Attempt Submission</button>
+    <div id="crossStudentTestStatus"></div>
   </div>
 
   <div id="questionsPanel" class="card hidden">
@@ -543,7 +544,20 @@ async function submitAttempt() {
     log('crossStudentTestStatus', 'Rejected: ' + e.message);
   }
   }
-async function saveAnswer(index) {
+async function testCrossStudentSubmit() {
+  try {
+    const attempt_id = document.getElementById('testAttemptId').value.trim();
+
+    const result = await invokeFunction('submit-and-grade-attempt', {
+      attempt_id
+    });
+
+    log('crossStudentTestStatus', 'Response: ' + JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('crossStudentTestStatus', 'Rejected: ' + e.message);
+  }
+}
+  async function saveAnswer(index) {
   try {
     const question_id = getQuestionId(index);
     const selected_option = getSelectedOption(index);
