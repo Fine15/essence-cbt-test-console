@@ -279,7 +279,7 @@ async function getAttemptHistory() {
     log('practiceStatus', 'Retrieving attempt history...');
 
     const result = await invokeFunction('attempt-history', {
-      limit: 30,
+      limit: 2,
       offset: 0
     });
 
