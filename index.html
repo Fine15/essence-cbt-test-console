@@ -155,6 +155,11 @@
     <label>Attempt History</label>
 <button class="gray" onclick="getAttemptHistory()">Retrieve Attempt History</button>
     <div id="practiceStatus" class="status">Ready.</div>
+ <h3>Cross-Student Security Test</h3>
+<input id="testAttemptId" placeholder="Attempt ID">
+<input id="testQuestionId" placeholder="Question ID">
+<button onclick="testCrossStudentSave()">Test Answer Save</button>
+<div id="crossStudentTestStatus"></div>
   </div>
 
   <div id="questionsPanel" class="card hidden">
@@ -522,6 +527,22 @@ async function submitAttempt() {
     if (btn) btn.disabled = false;
   }
 }
+  async function testCrossStudentSave() {
+  try {
+    const attempt_id = document.getElementById('testAttemptId').value.trim();
+    const question_id = document.getElementById('testQuestionId').value.trim();
+
+    const result = await invokeFunction('save-attempt-answer', {
+      attempt_id,
+      question_id,
+      selected_option: 'A'
+    });
+
+    log('crossStudentTestStatus', 'Response: ' + JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('crossStudentTestStatus', 'Rejected: ' + e.message);
+  }
+  }
 async function saveAnswer(index) {
   try {
     const question_id = getQuestionId(index);
