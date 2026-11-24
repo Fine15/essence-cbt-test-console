@@ -154,6 +154,7 @@
   <div id="questionsPanel" class="card hidden">
     <h2>Allocated Questions</h2>
     <div id="questionsContainer"></div>
+    <button id="submitAttemptBtn" class="secondary" onclick="submitAttempt()">Submit Attempt and Grade</button>
   </div>
 
 </div>
@@ -412,7 +413,32 @@ function getSelectedOption(index) {
 
   return null;
 }
+async function submitAttempt() {
+  try {
+    if (!client) throw new Error('Please sign in first.');
+    if (!currentAttemptId) throw new Error('Start and allocate a practice attempt first.');
 
+    const btn = document.getElementById('submitAttemptBtn');
+    btn.disabled = true;
+
+    log('practiceStatus', 'Submitting attempt and grading...');
+
+    const result = await invokeFunction('submit-and-grade-attempt', {
+      attempt_id: currentAttemptId
+    });
+
+    log('practiceStatus', 'Submission and grading successful.\n' +
+      JSON.stringify(result, null, 2));
+
+    btn.textContent = 'Attempt submitted';
+
+  } catch (e) {
+    log('practiceStatus', 'Submission error: ' + e.message);
+
+    const btn = document.getElementById('submitAttemptBtn');
+    if (btn) btn.disabled = false;
+  }
+}
 async function saveAnswer(index) {
   try {
     const question_id = getQuestionId(index);
