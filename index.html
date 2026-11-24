@@ -1,112 +1,464 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Essence CBT Test Console</title>
-<style>
-body{font-family:system-ui,sans-serif;max-width:720px;margin:20px auto;padding:0 14px;background:#f6f7fb;color:#172033}
-main{background:white;border:1px solid #ddd;border-radius:14px;padding:18px}
-input,button{width:100%;box-sizing:border-box;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #bbb;font:inherit}
-button{background:#172b54;color:white;border:0;font-weight:600}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f8;padding:12px;border-radius:8px}
-small{color:#555}
-h1{font-size:1.4rem}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Essence CBT Test Console</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f4f5f9;
+      color: #17233e;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.05);
+    }
+    h1 { color: #142c55; }
+    h2 { font-size: 20px; }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 7px;
+      border: 1px solid #ccd2df;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #142c55;
+      color: white;
+    }
+    button.secondary { background: #b51d72; }
+    button.gray { background: #697386; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .status {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #f1f3f8;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 13px;
+    }
+    .question {
+      border: 1px solid #e0e4ed;
+      padding: 18px;
+      border-radius: 12px;
+      margin-top: 18px;
+    }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px;
+      background: #f6f7fb;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: normal;
+    }
+    .option input {
+      width: auto;
+      margin: 2px 0 0;
+    }
+    .question-text { font-weight: bold; }
+    .question-meta {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .saved {
+      color: #15803d;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .unsaved {
+      color: #b45309;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .hidden { display: none; }
+  </style>
 </head>
+
 <body>
-<main>
-<h1>Essence CBT — Live Test Console</h1>
-<p>This temporary page is for controlled backend testing only. Use test accounts, not student accounts.</p>
+<div class="container">
 
-<label>Supabase project URL
-<input id="url" placeholder="https://YOUR_PROJECT.supabase.co">
-</label>
+  <div class="card">
+    <h1>ESSENCE CBT</h1>
+    <p>Backend testing console</p>
 
-<label>Supabase publishable/anon key
-<input id="key" placeholder="Publishable/anon key">
-</label>
+    <label>Supabase Project URL</label>
+    <input id="projectUrl" placeholder="https://your-project.supabase.co">
 
-<label>Test account email
-<input id="email" type="email">
-</label>
+    <label>Supabase Anon / Publishable Key</label>
+    <input id="anonKey" placeholder="Your public anon key">
 
-<label>Password
-<input id="password" type="password">
-</label>
+    <label>Test Email</label>
+    <input id="email" type="email" placeholder="Test student email">
 
-<button id="login">Sign in test account</button>
-<button id="logout">Sign out</button>
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Password">
 
-<pre id="out">Console ready. JavaScript loaded.</pre>
+    <button id="loginBtn" onclick="login()">Sign in</button>
+    <button class="gray" onclick="logout()">Sign out</button>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <div id="authStatus" class="status">Not signed in.</div>
+  </div>
+
+  <div id="practicePanel" class="card hidden">
+    <h2>Start Practice</h2>
+
+    <label>Subject</label>
+    <select id="subject">
+      <option value="0a1e5e4a-dd98-443a-b591-44518ae805ab">English</option>
+      <option value="8c0d6b23-d6b6-42af-9bd5-230a9bd7df6c">Physics</option>
+      <option value="36f2d567-db01-49e9-a6e8-98b203a19f20">Chemistry</option>
+      <option value="8c5e3af2-56d2-45bc-9695-774e072c5917">Biology</option>
+    </select>
+
+    <label>Number of questions</label>
+    <input id="questionCount" type="number" min="1" value="5">
+
+    <label>Duration (minutes)</label>
+    <input id="duration" type="number" min="1" value="20">
+
+    <button id="startBtn" onclick="startPractice()">Start Practice</button>
+    <button class="secondary" onclick="allocateQuestions()">Allocate Questions</button>
+
+    <div id="practiceStatus" class="status">Ready.</div>
+  </div>
+
+  <div id="questionsPanel" class="card hidden">
+    <h2>Allocated Questions</h2>
+    <div id="questionsContainer"></div>
+  </div>
+
+</div>
+
 <script>
-const out=document.getElementById('out');
-let client=null;
+let client = null;
+let currentAttemptId = null;
+let allocatedQuestions = [];
 
-function say(x){
-out.textContent=typeof x==='string'?x:JSON.stringify(x,null,2);
+function log(element, message) {
+  document.getElementById(element).textContent = message;
 }
 
-document.getElementById('login').onclick=async()=>{
-try{
-const u=document.getElementById('url').value.trim();
-const k=document.getElementById('key').value.trim();
-const e=document.getElementById('email').value.trim();
-const p=document.getElementById('password').value;
+async function login() {
+  const url = document.getElementById('projectUrl').value.trim();
+  const key = document.getElementById('anonKey').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
 
-if(!u||!k||!e||!p){
-say('Please fill in all four fields.');
-return;
+  if (!url || !key || !email || !password) {
+    log('authStatus', 'Please fill in all sign-in fields.');
+    return;
+  }
+
+  try {
+    client = window.supabase.createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+
+    const { data, error } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    log('authStatus', JSON.stringify({
+      success: true,
+      user_id: data.user.id
+    }, null, 2));
+
+    document.getElementById('practicePanel').classList.remove('hidden');
+  } catch (e) {
+    log('authStatus', 'Sign-in failed: ' + e.message);
+  }
 }
 
-if(!window.supabase){
-say('Supabase JS library did not load. Check internet connection.');
-return;
+async function logout() {
+  if (client) {
+    try {
+      await client.auth.signOut();
+    } catch (e) {}
+  }
+
+  client = null;
+  currentAttemptId = null;
+  allocatedQuestions = [];
+
+  document.getElementById('practicePanel').classList.add('hidden');
+  document.getElementById('questionsPanel').classList.add('hidden');
+  document.getElementById('questionsContainer').innerHTML = '';
+
+  log('authStatus', 'Signed out.');
+  log('practiceStatus', 'Ready.');
 }
 
-client=window.supabase.createClient(u,k,{
-auth:{persistSession:false}
-});
+async function invokeFunction(name, body) {
+  if (!client) throw new Error('Please sign in first.');
 
-say('Signing in…');
+  const { data, error } = await client.functions.invoke(name, {
+    body
+  });
 
-const {data,error}=await client.auth.signInWithPassword({
-email:e,password:p
-});
+  if (error) {
+    let message = error.message || 'Function call failed';
 
-if(error){
-say({stage:'sign-in',error:error.message});
-return;
+    if (error.context) {
+      try {
+        const response = error.context;
+        if (typeof response.json === 'function') {
+          const details = await response.json();
+          message = details.message || details.error || JSON.stringify(details);
+        }
+      } catch (e) {}
+    }
+
+    throw new Error(message);
+  }
+
+  return data;
 }
 
-say({
-stage:'sign-in',
-success:true,
-user_id:data.user?.id,
-access_token_received:!!data.session
-});
+async function startPractice() {
+  try {
+    if (!client) throw new Error('Please sign in first.');
 
-}catch(err){
-say({error:String(err)});
-}
-};
+    currentAttemptId = null;
+    allocatedQuestions = [];
+    document.getElementById('questionsContainer').innerHTML = '';
+    document.getElementById('questionsPanel').classList.add('hidden');
 
-document.getElementById('logout').onclick=async()=>{
-if(!client){
-say('No active test session.');
-return;
+    const subject_id = document.getElementById('subject').value;
+    const question_count = Number(document.getElementById('questionCount').value);
+    const duration_minutes = Number(document.getElementById('duration').value);
+
+    if (question_count < 1 || duration_minutes < 1) {
+      throw new Error('Question count and duration must be at least 1.');
+    }
+
+    log('practiceStatus', 'Starting practice session...');
+
+    const result = await invokeFunction('start-practice-session', {
+      subject_id,
+      question_count,
+      duration_minutes
+    });
+
+    currentAttemptId =
+      result.attempt_id ||
+      result.attempt?.id ||
+      result.id;
+
+    if (!currentAttemptId) {
+      log('practiceStatus', JSON.stringify(result, null, 2));
+      throw new Error('Attempt ID was not found in the response.');
+    }
+
+    log('practiceStatus', 'Practice started.\nAttempt ID: ' + currentAttemptId);
+  } catch (e) {
+    log('practiceStatus', 'Error: ' + e.message);
+  }
 }
 
-try{
-const {error}=await client.auth.signOut();
-say(error?{error:error.message}:'Signed out.');
-}catch(e){
-say(String(e));
+async function allocateQuestions() {
+  try {
+    if (!client) throw new Error('Please sign in first.');
+    if (!currentAttemptId) throw new Error('Start a practice session first.');
+
+    log('practiceStatus', 'Allocating questions...');
+
+    const result = await invokeFunction('allocate-practice-questions', {
+      attempt_id: currentAttemptId
+    });
+
+    let questions =
+      result.questions ||
+      result.allocated_questions ||
+      result.data?.questions;
+
+    if (!Array.isArray(questions)) {
+      log('practiceStatus', JSON.stringify(result, null, 2));
+      throw new Error('Could not locate the questions array in the response.');
+    }
+
+    allocatedQuestions = questions;
+
+    renderQuestions();
+
+    document.getElementById('questionsPanel').classList.remove('hidden');
+
+    log('practiceStatus',
+      'Allocation successful.\n' +
+      'Attempt ID: ' + currentAttemptId +
+      '\nQuestions allocated: ' + questions.length
+    );
+  } catch (e) {
+    log('practiceStatus', 'Allocation error: ' + e.message);
+  }
 }
-};
+
+function renderQuestions() {
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+
+  allocatedQuestions.forEach((q, index) => {
+    const questionId = q.question_id || q.id;
+    const questionText =
+      q.question_text || q.question || q.text || 'Question text unavailable';
+
+    const options = q.options || {
+      A: q.option_a,
+      B: q.option_b,
+      C: q.option_c,
+      D: q.option_d
+    };
+
+    const div = document.createElement('div');
+    div.className = 'question';
+
+    const heading = document.createElement('div');
+    heading.className = 'question-meta';
+    heading.textContent = 'Question ' + (index + 1);
+    div.appendChild(heading);
+
+    const text = document.createElement('div');
+    text.className = 'question-text';
+    text.textContent = questionText;
+    div.appendChild(text);
+
+    const status = document.createElement('div');
+    status.id = 'status-' + index;
+    div.appendChild(status);
+
+    ['A', 'B', 'C', 'D'].forEach(letter => {
+      if (options[letter] == null) return;
+
+      const label = document.createElement('label');
+      label.className = 'option';
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'q-' + index;
+      radio.value = letter;
+
+      const optionText = document.createElement('span');
+      optionText.textContent = letter + '. ' + options[letter];
+
+      label.appendChild(radio);
+      label.appendChild(optionText);
+      div.appendChild(label);
+    });
+
+    const save = document.createElement('button');
+    save.textContent = 'Save selected answer';
+    save.onclick = () => saveAnswer(index);
+    div.appendChild(save);
+
+    const clear = document.createElement('button');
+    clear.className = 'gray';
+    clear.textContent = 'Clear saved answer';
+    clear.onclick = () => clearAnswer(index);
+    div.appendChild(clear);
+
+    container.appendChild(div);
+  });
+}
+
+function getQuestionId(index) {
+  const q = allocatedQuestions[index];
+  return q.question_id || q.id;
+}
+
+function getSelectedOption(index) {
+  const radios = document.querySelectorAll('input[name="q-' + index + '"]');
+
+  for (const radio of radios) {
+    if (radio.checked) return radio.value;
+  }
+
+  return null;
+}
+
+async function saveAnswer(index) {
+  try {
+    const question_id = getQuestionId(index);
+    const selected_option = getSelectedOption(index);
+
+    if (!selected_option) {
+      throw new Error('Select an option before saving.');
+    }
+
+    const result = await invokeFunction('save-attempt-answer', {
+      attempt_id: currentAttemptId,
+      question_id,
+      selected_option
+    });
+
+    const status = document.getElementById('status-' + index);
+    status.className = 'saved';
+    status.textContent = 'Saved: ' + selected_option;
+
+    log('practiceStatus', 'Answer saved successfully.\n' +
+      JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('practiceStatus', 'Save error: ' + e.message);
+  }
+}
+
+async function clearAnswer(index) {
+  try {
+    const question_id = getQuestionId(index);
+
+    const result = await invokeFunction('save-attempt-answer', {
+      attempt_id: currentAttemptId,
+      question_id,
+      selected_option: null
+    });
+
+    const radios = document.querySelectorAll('input[name="q-' + index + '"]');
+    radios.forEach(r => r.checked = false);
+
+    const status = document.getElementById('status-' + index);
+    status.className = 'unsaved';
+    status.textContent = 'Answer cleared.';
+
+    log('practiceStatus', 'Answer cleared successfully.\n' +
+      JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('practiceStatus', 'Clear error: ' + e.message);
+  }
+}
 </script>
-</main>
 </body>
-</html>
+  </html>
+  
