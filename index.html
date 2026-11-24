@@ -440,6 +440,9 @@ const options = q.options || {
     text.className = 'question-text';
     text.textContent = questionText;
     div.appendChild(text);
+    const idLabel = document.createElement('div');
+idLabel.textContent = 'Question ID: ' + questionId;
+div.appendChild(idLabel);
 
     const status = document.createElement('div');
     status.id = 'status-' + index;
