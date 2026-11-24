@@ -152,6 +152,8 @@
      <label>Review finalized attempt ID</label>
 <input id="reviewAttemptId" placeholder="Paste submitted attempt ID">
 <button class="secondary" onclick="reviewAttempt()">Review Finalized Attempt</button>
+    <label>Attempt History</label>
+<button class="gray" onclick="getAttemptHistory()">Retrieve Attempt History</button>
     <div id="practiceStatus" class="status">Ready.</div>
   </div>
 
@@ -270,7 +272,23 @@ async function reviewAttempt() {
     log('practiceStatus', 'Review error: ' + e.message);
   }
 }
-async function startPractice() {
+async function getAttemptHistory() {
+  try {
+    if (!client) throw new Error('Please sign in first.');
+
+    log('practiceStatus', 'Retrieving attempt history...');
+
+    const result = await invokeFunction('attempt-history', {
+      limit: 30,
+      offset: 0
+    });
+
+    log('practiceStatus', 'Attempt history retrieved successfully.\n' + JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('practiceStatus', 'History error: ' + e.message);
+  }
+}
+  async function startPractice() {
   try {
     if (!client) throw new Error('Please sign in first.');
 
