@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Essence CBT Test Console</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:720px;margin:20px auto;padding:0 14px;background:#f6f7fb;color:#172033}
+main{background:white;border:1px solid #ddd;border-radius:14px;padding:18px}
+input,button{width:100%;box-sizing:border-box;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #bbb;font:inherit}
+button{background:#172b54;color:white;border:0;font-weight:600}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f8;padding:12px;border-radius:8px}
+small{color:#555}
+h1{font-size:1.4rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Essence CBT — Live Test Console</h1>
+<p>This temporary page is for controlled backend testing only. Use test accounts, not student accounts.</p>
+
+<label>Supabase project URL
+<input id="url" placeholder="https://YOUR_PROJECT.supabase.co">
+</label>
+
+<label>Supabase publishable/anon key
+<input id="key" placeholder="Publishable/anon key">
+</label>
+
+<label>Test account email
+<input id="email" type="email">
+</label>
+
+<label>Password
+<input id="password" type="password">
+</label>
+
+<button id="login">Sign in test account</button>
+<button id="logout">Sign out</button>
+
+<pre id="out">Console ready. JavaScript loaded.</pre>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const out=document.getElementById('out');
+let client=null;
+
+function say(x){
+out.textContent=typeof x==='string'?x:JSON.stringify(x,null,2);
+}
+
+document.getElementById('login').onclick=async()=>{
+try{
+const u=document.getElementById('url').value.trim();
+const k=document.getElementById('key').value.trim();
+const e=document.getElementById('email').value.trim();
+const p=document.getElementById('password').value;
+
+if(!u||!k||!e||!p){
+say('Please fill in all four fields.');
+return;
+}
+
+if(!window.supabase){
+say('Supabase JS library did not load. Check internet connection.');
+return;
+}
+
+client=window.supabase.createClient(u,k,{
+auth:{persistSession:false}
+});
+
+say('Signing in…');
+
+const {data,error}=await client.auth.signInWithPassword({
+email:e,password:p
+});
+
+if(error){
+say({stage:'sign-in',error:error.message});
+return;
+}
+
+say({
+stage:'sign-in',
+success:true,
+user_id:data.user?.id,
+access_token_received:!!data.session
+});
+
+}catch(err){
+say({error:String(err)});
+}
+};
+
+document.getElementById('logout').onclick=async()=>{
+if(!client){
+say('No active test session.');
+return;
+}
+
+try{
+const {error}=await client.auth.signOut();
+say(error?{error:error.message}:'Signed out.');
+}catch(e){
+say(String(e));
+}
+};
+</script>
+</main>
+</body>
+</html>
