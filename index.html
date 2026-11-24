@@ -144,7 +144,9 @@
 
     <label>Duration (minutes)</label>
     <input id="duration" type="number" min="1" value="20">
-
+     <label>Recover existing attempt ID</label>
+<input id="recoverAttemptId" placeholder="Paste your unfinished attempt ID">
+<button class="gray" onclick="recoverAttempt()">Recover Attempt</button>
     <button id="startBtn" onclick="startPractice()">Start Practice</button>
     <button class="secondary" onclick="allocateQuestions()">Allocate Questions</button>
 
@@ -290,7 +292,49 @@ async function startPractice() {
     log('practiceStatus', 'Error: ' + e.message);
   }
 }
+async function recoverAttempt() {
+  try {
+    if (!client) throw new Error("Please sign in first.");
 
+    const attemptId = document.getElementById("recoverAttemptId").value.trim();
+
+    if (!attemptId) throw new Error("Enter the unfinished attempt ID.");
+
+    currentAttemptId = attemptId;
+    allocatedQuestions = [];
+    document.getElementById("questionsContainer").innerHTML = "";
+
+    log("practiceStatus", "Recovering existing attempt and its allocated questions...");
+
+    const result = await invokeFunction("allocate-practice-questions", {
+      attempt_id: attemptId
+    });
+
+    const questions =
+      result.questions ||
+      result.allocated_questions ||
+      result.data?.questions;
+
+    if (!Array.isArray(questions)) {
+      throw new Error("Could not locate questions in recovery response.");
+    }
+
+    allocatedQuestions = questions;
+    renderQuestions();
+
+    document.getElementById("questionsPanel").classList.remove("hidden");
+
+    log("practiceStatus",
+      "Attempt recovered successfully.\n" +
+      "Attempt ID: " + attemptId +
+      "\nQuestions: " + questions.length +
+      "\nExisting saved answers remain on the backend."
+    );
+
+  } catch (e) {
+    log("practiceStatus", "Recovery error: " + e.message);
+  }
+}
 async function allocateQuestions() {
   try {
     if (!client) throw new Error('Please sign in first.');
