@@ -244,20 +244,30 @@ async function invokeFunction(name, body) {
     body
   });
 
-  if (error) {
-    let message = error.message || 'Function call failed';
+    if (error) {
+    let details = {
+      message: error.message,
+      name: error.name
+    };
 
     if (error.context) {
-      try {
-        const response = error.context;
-        if (typeof response.json === 'function') {
-          const details = await response.json();
-          message = details.message || details.error || JSON.stringify(details);
+      details.contextType = error.context.constructor?.name;
+
+      if (typeof error.context.status === 'number') {
+        details.status = error.context.status;
+      }
+
+      if (typeof error.context.text === 'function') {
+        try {
+          details.responseBody = await error.context.clone().text();
+        } catch (e) {
+          details.bodyReadError = e.message;
         }
-      } catch (e) {}
+      }
     }
 
-    throw new Error(message);
+    throw new Error(JSON.stringify(details, null, 2));
+    }
   }
 
   return data;
