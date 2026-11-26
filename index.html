@@ -558,6 +558,19 @@ async function testCrossStudentSubmit() {
     log('crossStudentTestStatus', 'Rejected: ' + e.message);
   }
 }
+  async function testCrossStudentCancel() {
+  try {
+    const attempt_id = document.getElementById('testAttemptId').value.trim();
+
+    const result = await invokeFunction('cancel-attempt', {
+      attempt_id
+    });
+
+    log('crossStudentTestStatus', 'Response: ' + JSON.stringify(result, null, 2));
+  } catch (e) {
+    log('crossStudentTestStatus', 'Rejected: ' + e.message);
+  }
+  }
   async function saveAnswer(index) {
   try {
     const question_id = getQuestionId(index);
